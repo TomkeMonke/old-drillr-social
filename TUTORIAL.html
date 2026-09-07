@@ -417,8 +417,8 @@
     <h1>Making the classic carousels</h1>
     <p class="standfirst">
       The older look: an off-white slide, a heavy black headline across the top,
-      an app screenshot standing on a drop shadow underneath. Everything below
-      runs on your own machine, and none of it costs anything.
+      an app screenshot standing on a drop shadow underneath. One command makes
+      one, it all runs on your own machine, and none of it costs anything.
     </p>
   </header>
 
@@ -461,10 +461,15 @@
       <p class="note-title">The part worth knowing up front</p>
       <p>
         <code>plan</code> is the only command that talks to an API, and the only one
-        that costs money. You can skip it entirely. <code>brief</code> prints the exact
-        same request as text, you paste that into any Claude you already have, and
-        <code>import</code> takes the answer back. Same copy rules, same review gate,
-        no account needed.
+        that costs money. You can skip it entirely. <code>brief</code> puts the exact
+        same request on your clipboard, you paste that into any Claude you already
+        have, and <code>import</code> reads the answer back off the clipboard. Same
+        copy rules, same review gate, no account needed.
+      </p>
+      <p>
+        <code>node slideshow.mjs go</code> chains all four steps into one command
+        and keeps the gate - it stops on each carousel and waits for you to say
+        yes. That is the one to use day to day.
       </p>
     </div>
   </section>
@@ -766,6 +771,26 @@ backgrounds/portrait/    <span class="c">&larr; 8+   about 2:3, tall</span></pre
     <h2>Making a carousel</h2>
     <p class="sub">The loop you will actually run.</p>
 
+    <div class="note key">
+      <p class="note-title">Start here: one command does all of it</p>
+      <div class="cmd">
+        <div class="cmd-label">terminal</div>
+        <pre>node slideshow.mjs go</pre>
+      </div>
+      <p>
+        It puts the brief on your clipboard, waits while you paste it into a
+        chatbot, reads the reply straight back off your clipboard, shows you each
+        carousel, and renders the ones you approve. No files to create, nothing
+        to copy out of the terminal window.
+      </p>
+      <p>
+        It still stops and asks before anything renders. You type <code>y</code>
+        to approve a carousel or press Enter to leave it as a draft. Everything
+        below is the same loop done a step at a time, which is worth reading once
+        so you know what <code>go</code> is doing on your behalf.
+      </p>
+    </div>
+
     <ol class="steps">
       <li>
         <div>
@@ -775,9 +800,10 @@ backgrounds/portrait/    <span class="c">&larr; 8+   about 2:3, tall</span></pre
             <pre>node slideshow.mjs brief --count 3</pre>
           </div>
           <p>
-            Prints a wall of text: what Drillr is, the copy rules, a description of
-            what each of the four screenshots shows, and a list of every hook already
-            used so you do not repeat one. Copy the whole thing.
+            Prints what Drillr is, the copy rules, a description of what each of the
+            four screenshots shows, and every hook used so far so the assistant can
+            pick a fresh angle. It also puts the whole thing on your clipboard, so
+            there is nothing to select out of the terminal.
           </p>
         </div>
       </li>
@@ -788,40 +814,11 @@ backgrounds/portrait/    <span class="c">&larr; 8+   about 2:3, tall</span></pre
           <p>
             Claude, ChatGPT, Gemini, whatever you already use - the brief carries all
             its own context, so nothing depends on which one. Free tiers are fine.
-            It comes back with a JSON array.
+            It comes back with a JSON array. Copy that reply.
           </p>
-
-          <div class="note key">
-            <p class="note-title">You have to create drafts.json yourself</p>
-            <p>
-              It is not in the zip and the tool never writes it. Make a new empty text
-              file, paste the whole JSON array into it, and save it as
-              <code>drafts.json</code> in the <strong>same folder as
-              <code>slideshow.mjs</code></strong> - the folder you unzipped and are
-              running the commands from, not <code>state/</code> and not
-              <code>out/</code>.
-            </p>
-            <div class="cmd">
-              <div class="cmd-label">where it goes</div>
-              <pre>old-drillr-social/
-  slideshow.mjs
-  drafts.json     <span class="c">&larr; you create this one</span>
-  assets/
-  backgrounds/
-  out/
-  state/</pre>
-            </div>
-            <p>
-              On Windows, make sure your editor does not quietly save it as
-              <code>drafts.json.txt</code>. If the next step says
-              <code>ENOENT: no such file or directory</code>, the file is either
-              somewhere else or named something else.
-            </p>
-          </div>
-
           <p>
-            Do not bother tidying the reply. If it wraps the JSON in a sentence or a
-            code fence, the importer finds the array anyway.
+            Do not bother tidying it. If it wraps the JSON in a sentence or a code
+            fence, the importer finds the array anyway.
           </p>
         </div>
       </li>
@@ -831,7 +828,30 @@ backgrounds/portrait/    <span class="c">&larr; 8+   about 2:3, tall</span></pre
           <h3>Import and read it</h3>
           <div class="cmd">
             <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs import --from drafts.json</pre>
+            <pre>node slideshow.mjs import</pre>
+          </div>
+          <p>
+            Reads your clipboard. There is no file to make.
+          </p>
+
+          <div class="note key">
+            <p class="note-title">If you would rather use a file</p>
+            <p>
+              <code>import</code> takes the reply from whichever of these it finds
+              first, so the old way still works:
+            </p>
+            <div class="cmd">
+              <div class="cmd-label">terminal</div>
+              <pre>node slideshow.mjs import --from drafts.json   <span class="c"># a file you create</span>
+node slideshow.mjs import --paste             <span class="c"># force the clipboard</span>
+... | node slideshow.mjs import               <span class="c"># piped in</span></pre>
+            </div>
+            <p>
+              Nothing ships a <code>drafts.json</code> and no command writes one - if
+              you go that route you create it yourself, beside
+              <code>slideshow.mjs</code>. On Windows, check your editor did not save
+              it as <code>drafts.json.txt</code>.
+            </p>
           </div>
           <p>
             Prints each carousel as it queues it, and flags anything off - hype words,
@@ -873,7 +893,7 @@ node slideshow.mjs approve all</pre>
           <h3>Render</h3>
           <div class="cmd">
             <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs render</pre>
+            <pre>node slideshow.mjs render all</pre>
           </div>
           <p>
             Writes <code>out/&lt;id&gt;/01.jpg</code> through <code>07.jpg</code> at
@@ -1071,18 +1091,29 @@ python render.py --calibrate out/&lt;id&gt;</pre>
     <p class="sub">The things that actually go wrong.</p>
 
     <details>
-      <summary>import says ENOENT: no such file or directory</summary>
+      <summary>go says the clipboard still holds the brief</summary>
       <div class="inner">
         <p>
-          There is no <code>drafts.json</code> where the tool looked. You create that
-          file yourself - nothing in the zip ships one and no command writes it.
-          It belongs beside <code>slideshow.mjs</code>, in the folder you run the
-          commands from.
+          You pressed Enter without copying the assistant's reply, so the brief
+          <code>go</code> put there is still the thing on the clipboard. Copy the
+          reply and run <code>go</code> again - it checks for this on purpose,
+          because the alternative is a JSON parse error on 80 lines of prompt.
+        </p>
+      </div>
+    </details>
+
+    <details>
+      <summary>import says no such file: ...drafts.json</summary>
+      <div class="inner">
+        <p>
+          Only happens if you passed <code>--from</code>. Without it,
+          <code>import</code> reads your clipboard and there is no file involved
+          at all - so the quickest fix is usually to drop the flag.
         </p>
         <p>
-          The path in the error message is exactly where it was expected, so compare it
-          against where you actually saved the file. On Windows, check the name is not
-          <code>drafts.json.txt</code>.
+          If you do want the file: you create it yourself, beside
+          <code>slideshow.mjs</code>. Nothing ships one and no command writes one.
+          On Windows, check the name is not <code>drafts.json.txt</code>.
         </p>
       </div>
     </details>

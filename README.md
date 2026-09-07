@@ -22,13 +22,17 @@ model writes one headline for each, plus the hook.
 
 ## The shape
 
-    plan  ->  approve  ->  render  ->  publish
-    Claude    you        Pillow      TikTok API
+    draft  ->  approve  ->  render  ->  publish
+    Claude     you         Pillow      TikTok API
 
-Four steps rather than one command, because of the middle one. `approve` is a
-human reading the copy before anything is drawn, and the state machine in
-`lib/queue.mjs` makes it unskippable: `render` only looks at `approved` posts
-and `publish` only looks at `rendered` ones.
+The middle step is the only one that matters. `approve` is a human reading the
+copy before anything is drawn, and the state machine in `lib/queue.mjs` makes
+it unskippable: `render` only looks at `approved` posts and `publish` only
+looks at `rendered` ones.
+
+`go` runs all four as one command. It does not remove the gate - it turns it
+from a second command into a keystroke, which is the same person reading the
+same words.
 
 ## One-time setup
 
@@ -49,11 +53,32 @@ optional. See [Writing the copy without an API key](#writing-the-copy-without-an
 
 ## The loop
 
+One command does all of it:
+
 ```bash
-node slideshow.mjs plan --count 3    # Claude drafts 3 carousels
+node slideshow.mjs go
+```
+
+`go` puts the brief on your clipboard, waits while you paste it into whatever
+assistant you use, reads the reply straight back off the clipboard, shows you
+each carousel, and renders the ones you approve. No file to create, nothing to
+select out of a terminal window.
+
+**It does not weaken the review gate.** It walks the same state machine every
+other verb does and stops on each draft to print the copy and wait for a
+keystroke - the gate moves from "run a second command" to "press y", which is
+the same person reading the same words. And it refuses to run without a
+terminal, so nothing automated can inherit a pipe and auto-approve.
+
+The same loop, a step at a time, when you want to edit copy in between:
+
+```bash
+node slideshow.mjs plan --count 3    # Claude drafts 3 carousels (API key)
+node slideshow.mjs brief --count 3   # or: that same ask -> your clipboard (free)
+node slideshow.mjs import            # queue the reply from your clipboard
 node slideshow.mjs list              # see the queue
 node slideshow.mjs approve all       # the gate
-node slideshow.mjs render            # -> out/<id>/01.jpg .. 07.jpg + caption.txt
+node slideshow.mjs render all        # -> out/<id>/01.jpg .. 07.jpg + caption.txt
 ```
 
 Edit any draft directly in `state/queue.json` before approving - `hook`,
@@ -162,26 +187,35 @@ that costs money. An API key bills from a **console.anthropic.com** balance,
 which is a separate pool from a Claude.ai subscription - a Pro or Max plan
 grants no API credit.
 
-So there is a second path that costs nothing. `brief` prints the exact request
-`plan` would have sent - same system prompt, same slide briefs, same
-do-not-repeat list, same output shape - and `import` queues whatever comes back:
+So there is a second path that costs nothing, and it is the default one. `brief`
+builds the exact request `plan` would have sent - same system prompt, same slide
+briefs, same do-not-repeat list, same output shape - and puts it on your
+clipboard; `import` reads the reply back off the clipboard.
 
 ```bash
-node slideshow.mjs brief --count 3            # paste this into any assistant
-#                                             # -> save the JSON reply as drafts.json
-node slideshow.mjs import --from drafts.json  # queue the reply
-node slideshow.mjs approve all                # same gate as always
+node slideshow.mjs go                # both halves, chained, with the gate
 ```
 
-**`drafts.json` is a file you create.** The repo does not ship one and `import`
-will not invent it. `import` also reads stdin, so `... | node slideshow.mjs
-import` skips the file entirely. It does not mind a reply wrapped in prose or a
-```` ```json ```` fence - it pulls the array out.
+or, separately:
 
-Two deliberate limits:
+```bash
+node slideshow.mjs brief --count 3   # -> clipboard, paste into any assistant
+node slideshow.mjs import            # <- clipboard, queues the reply
+node slideshow.mjs approve all       # same gate as always
+```
 
-- Everything lands as `draft`, never `approved`. Pasting a model's reply into a
-  file is not a human reading the copy.
+`import` does not mind a reply wrapped in prose or a ```` ```json ```` fence - it
+pulls the array out. Where it reads from, in order: `--from <file>` wins,
+then `--paste` forces the clipboard, then a piped stdin, then the clipboard.
+The file path still works and still needs a `drafts.json` you create yourself,
+but nothing requires it any more.
+
+Three deliberate limits:
+
+- Everything lands as `draft`, never `approved`. Carrying a model's reply
+  across on the clipboard is not a human reading the copy.
+- `go` refuses to run without a terminal. A cron or CI job that inherited a
+  pipe would otherwise sail through the review gate on default answers.
 - The house rules live in `lib/houserules.mjs`, imported by both paths. That
   file has no dependencies on purpose: the free path must not need the SDK
   installed.
@@ -241,11 +275,18 @@ account out - and it fails on the *next* run, not the one that caused it.
   `state/queue.json`.
 - **Nothing here is shared with `drillr-social` at runtime.** Two queues, two
   ledgers, two photo pools. Rendering here does not spend a background there.
+  `lib/clipboard.mjs` is a copy of that repo's, not an import, and differs in
+  one place: the Windows read path goes through a temp file, because
+  `Get-Clipboard` writes stdout in the console code page and a Polish machine
+  will quietly mangle anything outside ASCII on the way back.
+- **`go` on a fresh queue reviews the drafts already in it** rather than
+  drafting more. Empty the queue first, or use `brief` + `import`, if you
+  wanted new copy.
 
 ## Files
 
     TUTORIAL.html         the walkthrough to hand to someone new - open in a browser
-    slideshow.mjs         the CLI - every verb
+    slideshow.mjs         the CLI - every verb, `go` chains the useful ones
     render.py             Pillow renderer; the whole look lives here
     config.json           the 7-slide script, fixed copy, pools, TikTok settings
     reference-copy.json   the original carousels' wording, for `import`
@@ -253,6 +294,7 @@ account out - and it fails on the *next* run, not the one that caused it.
     lib/copy.mjs          Claude drafting
     lib/queue.mjs         the draft->approved->rendered->posted state machine
     lib/backgrounds.mjs   pool rotation + the used-image ledger
+    lib/clipboard.mjs     clipboard in and out, so the free path needs no file
     lib/tiktok.mjs        Content Posting API
     assets/               the app icon and the four fixed app screenshots
     backgrounds/          photos you supply (gitignored) - see its README
