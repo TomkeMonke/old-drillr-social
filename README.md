@@ -88,10 +88,10 @@ spends.
     |        black         |
     +----------------------+  458      the band: 1080 x 1003
     |   THE HEADLINE       |
-    |   [   artwork    ]   |
-    +----------------------+  1461
-    |        black         |
-    +----------------------+  1920
+    |   [  screenshot  ]   |
+    +---------| |----------+  1461
+    |  black  | | <- it keeps going
+    +---------|_|----------+  1920
 
 The originals are 1179x1095 images. That is not a canvas anybody designs to -
 it is what a TikTok photo post looks like screenshotted, fitted to the width of
@@ -150,8 +150,16 @@ is the icon on slide 2. Re-shoot them and drop the new files in under the same
 names; nothing else changes. `config.json`'s `script` says which screen each
 slide shows and what the headline over it says.
 
-The screenshots are pasted at their own aspect and run off the bottom of the
-band on purpose - that bleed is the template, not a crop bug.
+The screenshots are pasted at their own aspect and run **past the foot of the
+band onto the black bar** - they are drawn onto the frame after the band, so
+the phone breaks out of the off-white card rather than being cut off at its
+edge.
+
+The reference slides stop dead at that edge, but they had no choice: they are
+screenshots of a finished post, where the black is TikTok's letterboxing and
+nothing could be drawn on it. Here the bar is part of the image. Nothing about
+the position changed, so the part inside the band is identical either way -
+`--calibrate` reports the same numbers as before.
 
 ## Turning on auto-post
 

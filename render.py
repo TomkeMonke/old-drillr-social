@@ -8,17 +8,17 @@ ran before the full-bleed one.
 THE TWO FRAMES
 --------------
 Every slide is a 1080x1920 black frame with an off-white BAND sitting in the
-middle of it, and all the artwork lives inside that band:
+middle of it. Everything is laid out against that band:
 
     +----------------------+  0
     |        black         |
     +----------------------+  458   <- band top
     |                      |
     |     the artwork      |        1080 x 1003
-    |                      |
-    +----------------------+  1461  <- band bottom
-    |        black         |
-    +----------------------+  1920
+    |        |  |          |
+    +--------|  |----------+  1461  <- band bottom
+    |  black |  | <- the screenshot keeps going
+    +--------|__|----------+  1920
 
 That is not decoration, it is a measurement. The reference carousels are
 1179x1095 images, and TikTok shows a photo post fitted to the width of a 9:16
@@ -26,6 +26,14 @@ viewport with black filling the rest - which is exactly what the 28 reference
 screenshots caught. Rendering the band at the same 1179:1095 aspect and letting
 this file paint the bars means the output IS the old look at 9:16, rather than
 an approximation of it re-flowed to a taller canvas.
+
+The one thing that leaves the band is the app screenshot on slides 3 to 6. It
+is drawn onto the FRAME after the band is down, so it carries on over the black
+bar instead of stopping at the band's foot. The references stop dead at that
+edge, but they had no choice: they are screenshots of a post, where the black
+is TikTok's own letterboxing and nothing could be drawn on it. Here the bar is
+part of the image. Its position is unchanged either way, so the part inside the
+band still measures exactly what the originals measure.
 
 BAND, NOT CANVAS, IS THE UNIT
 -----------------------------
@@ -140,7 +148,8 @@ LAYOUT = {
         "art": {"kind": "square", "width": 0.452, "centre": (0.500, 0.500),
                 "shadow": "frame", "radius": "frame"},
     },
-    # slides 3-5: headline, then an app screenshot running off the bottom edge
+    # slides 3-5: headline, then an app screenshot that runs down past the
+    # band's foot and onto the black bar
     "screen": {
         "text_top": 0.026,
         "size": 0.0500,
@@ -345,12 +354,19 @@ def contain(img, box_w, box_h):
                       Image.LANCZOS)
 
 
-def draw_art(canvas, spec, art, text_bottom, band_w, band_h):
+def draw_art(canvas, spec, art, text_bottom, band_w, band_h, origin=(0, 0)):
+    """Draw one picture.
+
+    `origin` is where the band sits on `canvas`. It is (0, 0) for everything
+    that lives inside the band, and the band's position on the frame for the
+    app screenshots - see the `bleed` branch.
+    """
     path = spec.get("image")
     if not path or not os.path.exists(path):
         return
     img = Image.open(path).convert("RGB")
     kind = art["kind"]
+    ox, oy = origin
 
     if kind == "square":
         side = round(band_w * art["width"])
@@ -361,22 +377,22 @@ def draw_art(canvas, spec, art, text_bottom, band_w, band_h):
         img = img.crop(((img.width - side) // 2, (img.height - side) // 2,
                         (img.width - side) // 2 + side, (img.height - side) // 2 + side))
         cx, cy = art["centre"]
-        place(canvas, img, band_w * cx - side / 2, band_h * cy - side / 2,
+        place(canvas, img, ox + band_w * cx - side / 2, oy + band_h * cy - side / 2,
               RADIUS_PCT[art["radius"]], art["shadow"], band_w)
 
     elif kind == "contain":
         box_w, box_h = art["box"]
         img = contain(img, band_w * box_w, band_h * box_h)
         cx, cy = art["centre"]
-        place(canvas, img, band_w * cx - img.width / 2, band_h * cy - img.height / 2,
+        place(canvas, img, ox + band_w * cx - img.width / 2, oy + band_h * cy - img.height / 2,
               RADIUS_PCT[art["radius"]], art["shadow"], band_w)
 
-    else:  # "bleed": width-driven, top under the headline, off the bottom edge
+    else:  # "bleed": width-driven, top under the headline, past the band's foot
         target_w = round(band_w * art["width"])
         img = img.resize((target_w, max(1, round(img.height * target_w / img.width))),
                          Image.LANCZOS)
         top = text_bottom + band_h * art["gap"]
-        place(canvas, img, band_w * art["centre_x"] - target_w / 2, top,
+        place(canvas, img, ox + band_w * art["centre_x"] - target_w / 2, oy + top,
               RADIUS_PCT[art["radius"]], art["shadow"], band_w)
 
 
@@ -411,8 +427,13 @@ def draw_slide(slide, spec):
     # way it does in the references.
     if "aside" in layout and slide.get("aside"):
         draw_art(band, {"image": slide["aside"]}, layout["aside"], text_bottom, band_w, band_h)
-    if "art" in layout:
-        draw_art(band, slide, layout["art"], text_bottom, band_w, band_h)
+
+    # Everything that fits inside the band is drawn into the band. The app
+    # screenshots are not - see below.
+    art = layout.get("art")
+    bleeds = bool(art) and art["kind"] == "bleed"
+    if art and not bleeds:
+        draw_art(band, slide, art, text_bottom, band_w, band_h)
 
     # The footer sits UNDER the artwork by design - it is the only line in the
     # template that does, and it is why the CTA photo has a fixed centre
@@ -424,7 +445,22 @@ def draw_slide(slide, spec):
                    layout.get("text_width", TEXT_WIDTH_PCT), 1, 2)
 
     frame = Image.new("RGBA", (frame_w, frame_h), BAR_RGB + (255,))
-    frame.alpha_composite(band, ((frame_w - band_w) // 2, (frame_h - band_h) // 2))
+    origin = ((frame_w - band_w) // 2, (frame_h - band_h) // 2)
+    frame.alpha_composite(band, origin)
+
+    # The app screenshots are drawn onto the FRAME, after the band is down, so
+    # they carry on over the black bar instead of being cut off at the band's
+    # foot. On the reference slides the phone stops dead at the edge of the
+    # off-white - but the references are screenshots of a post, where the black
+    # is the app's letterboxing and nothing could be drawn on it. Here the bar
+    # is part of the image, so the phone can stand on the slide and run off it,
+    # which is what the crop in the originals was always implying.
+    #
+    # Position is unchanged: `origin` shifts it onto the frame, nothing else
+    # moves, so the part that shows inside the band is identical to before.
+    if bleeds:
+        draw_art(frame, slide, art, text_bottom, band_w, band_h, origin=origin)
+
     return frame.convert("RGB")
 
 
