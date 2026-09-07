@@ -1,0 +1,14 @@
+node_modules/
+drafts.json
+
+# You supply these. They are photographs somebody else owns - see
+# backgrounds/README.md - so they stay out of the repo.
+backgrounds/landscape/*
+backgrounds/portrait/*
+!backgrounds/*/.gitkeep
+
+# Rendered slides are reproducible from state/queue.json + the pools.
+out/
+
+# Rotated by `publish --commit`; the live value belongs in a secret.
+state/.refresh-token

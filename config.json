@@ -1,0 +1,131 @@
+{
+  "_comment": [
+    "Tuning for the CLASSIC drillr carousel. Everything the template needs that",
+    "is not per-post lives here, so a look change is a config edit rather than a",
+    "code edit. See README.md.",
+    "",
+    "This is a separate generator from drillr-social, not a mode of it. The two",
+    "templates share nothing but the font file and the queue machinery.",
+    "",
+    "width/height are the OUTER frame. The off-white band inside it is sized by",
+    "render.py from the reference aspect - do not try to set it here."
+  ],
+
+  "font": "ArchivoBlack.ttf",
+  "width": 1080,
+  "height": 1920,
+
+  "_script": [
+    "The seven slides, in order, and where each one gets its picture.",
+    "",
+    "  copy: the key on the post that carries this slide's headline. `features`",
+    "        is indexed, so features.0 is the first feature headline.",
+    "  image: a file in assets/, or `pool:<folder>` to take the next image from",
+    "        backgrounds/<folder>. `aside` is the second picture on slide 6.",
+    "  brief: what the copy model is told this slide has to say. Edit these and",
+    "        the drafting prompt changes with them - nothing restates the script.",
+    "",
+    "The four screens/*.jpg are fixed app captures. Re-shoot them and drop the",
+    "new files in with the same names; nothing else needs to change."
+  ],
+  "script": [
+    {
+      "type": "hook",
+      "copy": "hook",
+      "image": "pool:landscape",
+      "brief": "The cover. Frames the carousel as a short list of apps worth having, the way the reference set does. It must not name a feature."
+    },
+    {
+      "type": "icon",
+      "copy": "appTitle",
+      "image": "assets/app-icon.png",
+      "brief": "Fixed - the numbered name card. Leave it as 1.Drillr."
+    },
+    {
+      "type": "screen",
+      "copy": "features.0",
+      "image": "assets/screens/home.jpg",
+      "brief": "The daily session: Drillr builds the plan and picks the work for the position you actually play."
+    },
+    {
+      "type": "screen",
+      "copy": "features.1",
+      "image": "assets/screens/tips.jpg",
+      "brief": "The position screen: your four physical attributes scored, and the pro tips that go with your position."
+    },
+    {
+      "type": "screen",
+      "copy": "features.2",
+      "image": "assets/screens/diet.jpg",
+      "brief": "The diet tab: calories and macros for the day, and what to eat around a session."
+    },
+    {
+      "type": "progress",
+      "copy": "features.3",
+      "image": "assets/screens/progress.jpg",
+      "aside": "pool:portrait",
+      "brief": "The progress tab: the work you have put in, month by month, so the change is visible."
+    },
+    {
+      "type": "cta",
+      "copy": "ctaTop",
+      "footer": "ctaFooter",
+      "image": "pool:landscape",
+      "brief": "Fixed - the close. Two lines over the photo, Link in bio under it."
+    }
+  ],
+
+  "fixed": {
+    "_comment": [
+      "Slides the model never writes. `appTitle` keeps the 1. because the",
+      "reference set is framed as a countdown - drop the number and the hook",
+      "stops making sense."
+    ],
+    "appTitle": "1.Drillr",
+    "ctaTop": "Download now and Start improving",
+    "ctaFooter": "Link in bio"
+  },
+
+  "backgrounds": {
+    "_comment": [
+      "landscape carries the hook and the CTA photo - both sit in a wide slot,",
+      "so a 9:16 wallpaper lands there badly. portrait carries the player shot",
+      "beside the progress screenshot. Kept apart rather than cropped from one",
+      "pool because the template shows each photo at its own aspect."
+    ],
+    "landscape": "landscape",
+    "portrait": "portrait",
+    "cooldownDays": 45
+  },
+
+  "caption": {
+    "lead": "Lock in",
+    "hashtags": [
+      "football",
+      "footballapp",
+      "footballskills",
+      "soccer",
+      "footballtiktok"
+    ]
+  },
+
+  "copy": {
+    "model": "claude-opus-5",
+    "effort": "high"
+  },
+
+  "tiktok": {
+    "_comment": [
+      "OFF until the app clears TikTok's audit - same blocker as drillr-social,",
+      "and the same account, so clearing it once clears it for both.",
+      "urlPrefix must be a domain verified in the TikTok developer portal.",
+      "privacyLevel stays SELF_ONLY while unaudited: TikTok forces private on",
+      "unaudited clients anyway, and asking for PUBLIC_TO_EVERYONE just fails."
+    ],
+    "enabled": false,
+    "urlPrefix": "https://drillr.app/social/",
+    "privacyLevel": "SELF_ONLY",
+    "disableComment": false,
+    "autoAddMusic": true
+  }
+}
