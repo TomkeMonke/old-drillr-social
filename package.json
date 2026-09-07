@@ -2,10 +2,9 @@
   "name": "old-drillr-social",
   "private": true,
   "type": "module",
-  "description": "Generator for the classic Drillr TikTok photo carousel - off-white slides, Archivo Black headlines, app screenshots on a drop shadow",
+  "description": "Generator for the classic Drillr TikTok photo carousel - fixed copy, off-white slides, Archivo Black headlines, app screenshots on a drop shadow; only the photos change between carousels",
   "scripts": {
     "doctor": "node slideshow.mjs doctor",
-    "brief": "node slideshow.mjs brief",
-    "render": "node slideshow.mjs render"
+    "make": "node slideshow.mjs make"
   }
 }

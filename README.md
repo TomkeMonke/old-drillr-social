@@ -4,110 +4,83 @@ Generates the **classic** Drillr TikTok carousel - the one the account ran
 before the full-bleed template: an off-white slide, a heavy black headline
 across the top, and an app screenshot standing on a drop shadow underneath.
 
-This is a separate tool from `drillr-social`, not a mode of it. The two share a
-font file and the queue machinery and nothing else - different canvas,
-different type treatment, different slide script, different copy rules. Running
-one does not touch the other's queue or photo pools.
+    hook -> 1.Drillr -> daily session -> position -> diet -> progress -> close
+
+Seven slides, and **the words on them never change**. The original carousels
+all carried the same seven lines and only the photos moved, so that is what
+this reproduces: the copy sits in `config.json`, and a new carousel is the same
+slides with different pictures.
+
+That makes this a much smaller tool than `drillr-social`, which writes fresh
+copy for every post. There is no copy model here, no API key, no drafting, no
+review gate, no clipboard, no `drafts.json`. One command makes a carousel.
 
 Handing this to someone who has not seen it before? Point them at
 `TUTORIAL.html` - a self-contained page, opened straight from the folder in any
-browser, no server and no hosting anywhere. It walks the whole loop, covers the
-two things that stop every Windows machine before the first command runs, and
-spells out the three ways this template behaves differently from the other one.
-
-    hook -> 1.Drillr -> daily session -> position -> diet -> progress -> close
-
-Seven slides, fixed. Four of them are app screenshots that never change; the
-model writes one headline for each, plus the hook.
-
-## The shape
-
-    draft  ->  approve  ->  render  ->  publish
-    Claude     you         Pillow      TikTok API
-
-The middle step is the only one that matters. `approve` is a human reading the
-copy before anything is drawn, and the state machine in `lib/queue.mjs` makes
-it unskippable: `render` only looks at `approved` posts and `publish` only
-looks at `rendered` ones.
-
-`go` runs all four as one command. It does not remove the gate - it turns it
-from a second command into a keystroke, which is the same person reading the
-same words.
+browser, no server and no hosting anywhere.
 
 ## One-time setup
 
 ```bash
-npm i --no-save @anthropic-ai/sdk     # only `plan` needs it
-pip install Pillow                    # only `render` needs it
+pip install Pillow                    # the renderer
 
 node slideshow.mjs fonts              # fetch Archivo Black
 node slideshow.mjs doctor             # check the lot
 ```
 
 Then fill the photo pools - see `backgrounds/README.md`. Two folders, and they
-are not interchangeable: `landscape/` carries the hook and the closing slide,
-`portrait/` carries the player shot on slide 6.
+are **not interchangeable**: `landscape/` (about 3:2) carries the hook and the
+closing slide, `portrait/` (about 2:3) carries the player shot on slide 6.
+Photos are never cropped to fill a slot, so a tall wallpaper in `landscape/`
+renders as a narrow strip in the middle of a wide slot.
 
-`ANTHROPIC_API_KEY` in the environment, for `plan` only - and `plan` is
-optional. See [Writing the copy without an API key](#writing-the-copy-without-an-api-key).
-
-## The loop
-
-One command does all of it:
+## Making carousels
 
 ```bash
-node slideshow.mjs go
+node slideshow.mjs make               # one carousel
+node slideshow.mjs make --count 3     # three, each with different photos
 ```
 
-`go` puts the brief on your clipboard, waits while you paste it into whatever
-assistant you use, reads the reply straight back off the clipboard, shows you
-each carousel, and renders the ones you approve. No file to create, nothing to
-select out of a terminal window.
-
-**It does not weaken the review gate.** It walks the same state machine every
-other verb does and stops on each draft to print the copy and wait for a
-keystroke - the gate moves from "run a second command" to "press y", which is
-the same person reading the same words. And it refuses to run without a
-terminal, so nothing automated can inherit a pipe and auto-approve.
-
-The same loop, a step at a time, when you want to edit copy in between:
+That is the whole loop. It writes `out/<id>/01.jpg` through `07.jpg` at
+1080x1920 plus a `caption.txt` with the hashtags attached. Upload the folder by
+hand, then close the loop so it stops showing as pending:
 
 ```bash
-node slideshow.mjs plan --count 3    # Claude drafts 3 carousels (API key)
-node slideshow.mjs brief --count 3   # or: that same ask -> your clipboard (free)
-node slideshow.mjs import            # queue the reply from your clipboard
-node slideshow.mjs list              # see the queue
-node slideshow.mjs approve all       # the gate
-node slideshow.mjs render all        # -> out/<id>/01.jpg .. 07.jpg + caption.txt
-```
-
-Edit any draft directly in `state/queue.json` before approving - `hook`,
-`features`, `caption` and the fixed lines are all free text. `slideshow.mjs
-edit <id>` prints one post if you just want to read it.
-
-Until auto-post is on, upload `out/<id>/` by hand and close the loop so the
-hook joins the do-not-repeat list:
-
-```bash
+node slideshow.mjs list
 node slideshow.mjs publish <id> --manual
 ```
 
-`--topic` steers a batch: `plan --count 2 --topic recovery`.
+## Changing the words
 
-### Reproducing the originals
+They live in `config.json`, under `script`, one entry per slide. Edit a line
+and every carousel made afterwards carries the new wording.
 
-`reference-copy.json` holds the exact wording the original carousels used, with
-the two typos in it fixed (`Drill` -> `Drillr`, and the stray comma in "Drill
-gives, you tips"). Import it and you get the old set back, with fresh photos:
-
-```bash
-node slideshow.mjs import --from reference-copy.json
-node slideshow.mjs approve all
-node slideshow.mjs render
+```json
+{ "type": "screen",
+  "text": "Drillr builds you a personalized meal plan",
+  "image": "assets/screens/diet.jpg" }
 ```
 
-`out/_sample/` is that render, done here with placeholder photos so there is
-something to look at before the pools are filled. Delete it whenever.
+The wording shipped is the original set's, with two typos fixed: `Drill` was
+`Drillr` in two headlines, and "Drill gives, you tips" had a stray comma.
+
+**Keep a feature headline under about 60 characters.** Past that it wraps to a
+third line of heavy type and pushes the screenshot off the bottom of the slide.
+`doctor` prints the whole script and flags a line that is too long, a terminal
+period, or an em dash - none of which stop a render, all of which are wrong for
+this template.
+
+## What varies between carousels
+
+Only the photos, which makes `lib/backgrounds.mjs` the one part of this that
+still makes a decision. It picks least-recently-used first and keeps a ledger
+in `state/backgrounds-used.json`, with a 45-day cooldown.
+
+That cooldown matters more here than it does in the sibling tool. There, two
+posts a week apart say different things; here they say exactly the same thing,
+so the photos are the *only* thing stopping them from reading as a duplicate.
+A pool of six is not enough - `doctor` will tell you how many each carousel
+spends.
 
 ## The template
 
@@ -138,7 +111,7 @@ boxes, and prints them as band fractions:
 
 ```bash
 python render.py --calibrate ~/Downloads/old-slides    # the originals
-python render.py --calibrate out/_sample               # and fresh output
+python render.py --calibrate out/<id>                  # and fresh output
 ```
 
 The two lists read the same, line for line. Every number in `LAYOUT` came off
@@ -175,67 +148,10 @@ slide and 73/84px on the close, all in the reference's 1179px band.
 `assets/screens/*.jpg` are the four fixed captures, and `assets/app-icon.png`
 is the icon on slide 2. Re-shoot them and drop the new files in under the same
 names; nothing else changes. `config.json`'s `script` says which screen each
-slide shows and what the copy model is told that slide has to say.
+slide shows and what the headline over it says.
 
 The screenshots are pasted at their own aspect and run off the bottom of the
 band on purpose - that bleed is the template, not a crop bug.
-
-## Writing the copy without an API key
-
-`plan` is the only verb that calls the Anthropic API, and the only thing here
-that costs money. An API key bills from a **console.anthropic.com** balance,
-which is a separate pool from a Claude.ai subscription - a Pro or Max plan
-grants no API credit.
-
-So there is a second path that costs nothing, and it is the default one. `brief`
-builds the exact request `plan` would have sent - same system prompt, same slide
-briefs, same do-not-repeat list, same output shape - and puts it on your
-clipboard; `import` reads the reply back off the clipboard.
-
-```bash
-node slideshow.mjs go                # both halves, chained, with the gate
-```
-
-or, separately:
-
-```bash
-node slideshow.mjs brief --count 3   # -> clipboard, paste into any assistant
-node slideshow.mjs import            # <- clipboard, queues the reply
-node slideshow.mjs approve all       # same gate as always
-```
-
-`import` does not mind a reply wrapped in prose or a ```` ```json ```` fence - it
-pulls the array out. Where it reads from, in order: `--from <file>` wins,
-then `--paste` forces the clipboard, then a piped stdin, then the clipboard.
-The file path still works and still needs a `drafts.json` you create yourself,
-but nothing requires it any more.
-
-Three deliberate limits:
-
-- Everything lands as `draft`, never `approved`. Carrying a model's reply
-  across on the clipboard is not a human reading the copy.
-- `go` refuses to run without a terminal. A cron or CI job that inherited a
-  pipe would otherwise sail through the review gate on default answers.
-- The house rules live in `lib/houserules.mjs`, imported by both paths. That
-  file has no dependencies on purpose: the free path must not need the SDK
-  installed.
-
-### Why the copy rules differ from drillr-social's
-
-The standing rule for Drillr copy is *sell the outcome, never the feature
-list*. This template **is** a feature tour - four slides of app screenshots
-with a label over each - so the rule cannot be applied as written without
-throwing the format away.
-
-It is bent in exactly one place and no further: a headline may name the screen
-it sits over, and must then say what that screen does for the player rather
-than what it contains.
-
-    yes  Drillr builds your weekly plan with drills for your position
-    no   Log calories, macros, water intake and pre-match meals
-
-Everything else carries over unchanged - no invented numbers, no promised
-selection, no implied community, British English, no terminal periods.
 
 ## Turning on auto-post
 
@@ -247,7 +163,7 @@ audit once clears it for both. In order:
 2. **Verify a URL prefix.** `PULL_FROM_URL` is the only way to supply photos -
    there is no upload endpoint for carousels - and TikTok fetches them from a
    domain you have proven you own. Verify `https://drillr.app/social/`.
-3. **Host the slides.** `render` writes them locally; something has to put
+3. **Host the slides.** `make` writes them locally; something has to put
    `out/<id>/NN.jpg` at that prefix before the post fires. Not built.
 4. **Pass the audit.** Until then every post lands `SELF_ONLY` no matter what
    you ask for, which is why `config.tiktok.privacyLevel` is pinned to it.
@@ -270,31 +186,25 @@ account out - and it fails on the *next* run, not the one that caused it.
   asynchronously; a bad image URL surfaces at the status poll, not at init.
 - **Photos are only spent on a successful render.** `record()` runs after
   `render.py` exits 0, so a crashed render does not burn the pool.
-- **A post queued before `config.json`'s script changed will refuse to
-  render** rather than draw a slide with no copy on it. Fix it in
-  `state/queue.json`.
-- **Nothing here is shared with `drillr-social` at runtime.** Two queues, two
-  ledgers, two photo pools. Rendering here does not spend a background there.
-  `lib/clipboard.mjs` is a copy of that repo's, not an import, and differs in
-  one place: the Windows read path goes through a temp file, because
-  `Get-Clipboard` writes stdout in the console code page and a Polish machine
-  will quietly mangle anything outside ASCII on the way back.
-- **`go` on a fresh queue reviews the drafts already in it** rather than
-  drafting more. Empty the queue first, or use `brief` + `import`, if you
-  wanted new copy.
+- **A thin pool degrades, it does not throw.** Fewer photos than slots means a
+  repeat plus a warning, not a failed run. With the copy fixed, that repeat is
+  the only thing anyone would notice, so read the warnings.
+- **Nothing here is shared with `drillr-social` at runtime.** Two records, two
+  ledgers, two photo pools. Making a carousel here does not spend a background
+  there.
+- **`lib/queue.mjs` is a trimmed copy** of that repo's. It has no draft or
+  approved state, because nothing here needs reviewing. Do not copy the file
+  back the other way.
 
 ## Files
 
     TUTORIAL.html         the walkthrough to hand to someone new - open in a browser
-    slideshow.mjs         the CLI - every verb, `go` chains the useful ones
+    slideshow.mjs         the CLI: make, list, publish, doctor, fonts
     render.py             Pillow renderer; the whole look lives here
-    config.json           the 7-slide script, fixed copy, pools, TikTok settings
-    reference-copy.json   the original carousels' wording, for `import`
-    lib/houserules.mjs    the brand prompt + the lint, shared by both copy paths
-    lib/copy.mjs          Claude drafting
-    lib/queue.mjs         the draft->approved->rendered->posted state machine
-    lib/backgrounds.mjs   pool rotation + the used-image ledger
-    lib/clipboard.mjs     clipboard in and out, so the free path needs no file
+    config.json           the seven slides - their words, their pictures - plus
+                          the pools and the TikTok settings
+    lib/queue.mjs         the record of what has been made and posted
+    lib/backgrounds.mjs   pool rotation + the used-photo ledger
     lib/tiktok.mjs        Content Posting API
     assets/               the app icon and the four fixed app screenshots
     backgrounds/          photos you supply (gitignored) - see its README

@@ -417,59 +417,40 @@
     <h1>Making the classic carousels</h1>
     <p class="standfirst">
       The older look: an off-white slide, a heavy black headline across the top,
-      an app screenshot standing on a drop shadow underneath. One command makes
-      one, it all runs on your own machine, and none of it costs anything.
+      an app screenshot standing on a drop shadow underneath. The words never
+      change - one command picks fresh photos and draws the seven slides.
     </p>
   </header>
 
   <section>
-    <h2>This is not the other tool</h2>
-    <p class="sub">If you have used drillr-social, most of it will feel familiar. The parts that differ are the parts that catch people.</p>
-    <p>
-      <code>old-drillr-social</code> and <code>drillr-social</code> are two separate
-      tools that happen to share a font file and the same four commands. Different
-      slides, different look, different copy rules. They keep separate queues and
-      separate photo folders, so running one never touches the other's work.
-    </p>
-    <p>
-      Three things are genuinely different here, and each one has its own note
-      further down: the photo folders care about the <strong>shape</strong> of a
-      photo, the finished slides have <strong>black bars</strong> top and bottom on
-      purpose, and the copy rules allow something the other tool forbids.
-    </p>
-  </section>
-
-  <section>
     <h2>What it actually does</h2>
-    <p class="sub">Four steps, and the second one is a person.</p>
+    <p class="sub">Less than you might expect, and that is the point.</p>
 
-    <ul class="flow">
-      <li><span class="verb">plan</span><span class="who">copy gets drafted</span></li>
-      <li class="human"><span class="verb">approve</span><span class="who">you read it</span></li>
-      <li><span class="verb">render</span><span class="who">slides get drawn</span></li>
-      <li><span class="verb">publish</span><span class="who">upload</span></li>
-    </ul>
+    <div class="cmd">
+      <div class="cmd-label">terminal</div>
+      <pre>node slideshow.mjs make</pre>
+    </div>
 
     <p>
-      A post moves <code>draft &rarr; approved &rarr; rendered &rarr; posted</code> and
-      cannot skip a step. That is deliberate: <code>render</code> only looks at approved
-      posts, so nothing can be drawn, let alone posted, until a human has read the words.
-      It is the whole reason this is four commands instead of one.
+      That is the tool. It takes the seven lines of text out of
+      <code>config.json</code>, picks photos from the two folders you filled,
+      draws the slides and writes them to <code>out/</code>. Run it again and
+      you get the same carousel with different photos.
     </p>
 
     <div class="note key">
-      <p class="note-title">The part worth knowing up front</p>
+      <p class="note-title">The text does not change, and nothing writes it</p>
       <p>
-        <code>plan</code> is the only command that talks to an API, and the only one
-        that costs money. You can skip it entirely. <code>brief</code> puts the exact
-        same request on your clipboard, you paste that into any Claude you already
-        have, and <code>import</code> reads the answer back off the clipboard. Same
-        copy rules, same review gate, no account needed.
+        The original carousels all carried the same seven lines; only the
+        pictures moved between them. So this tool has no chatbot in it, no API
+        key, no drafting step and no approve step - there is nothing to review,
+        because the words are fixed and you can read them any time in
+        <code>config.json</code>.
       </p>
       <p>
-        <code>node slideshow.mjs go</code> chains all four steps into one command
-        and keeps the gate - it stops on each carousel and waits for you to say
-        yes. That is the one to use day to day.
+        If you have used <code>drillr-social</code>, that is the difference
+        between the two. That one writes fresh copy for every post and makes you
+        read it before anything renders. This one does not write copy at all.
       </p>
     </div>
   </section>
@@ -481,30 +462,27 @@
     <ol class="strip">
       <li class="written"><span class="what">Hook photo</span></li>
       <li><span class="what">1.Drillr icon</span></li>
-      <li class="written"><span class="what">Daily session</span></li>
-      <li class="written"><span class="what">Position tips</span></li>
-      <li class="written"><span class="what">Diet</span></li>
+      <li><span class="what">Daily session</span></li>
+      <li><span class="what">Position tips</span></li>
+      <li><span class="what">Diet</span></li>
       <li class="written"><span class="what">Progress</span></li>
-      <li><span class="what">Download now</span></li>
+      <li class="written"><span class="what">Download now</span></li>
     </ol>
 
     <p class="legend">
-      <span><i class="swatch written"></i> a headline gets written for this slide</span>
-      <span><i class="swatch"></i> fixed copy, never changes</span>
+      <span><i class="swatch written"></i> a photo from your folders goes here</span>
+      <span><i class="swatch"></i> a fixed app screenshot</span>
     </p>
 
     <p>
-      So five lines get written per carousel: the hook, and one headline for each of
-      the four app screenshots. Slide 2 always reads <code>1.Drillr</code> and slide 7
-      always reads <strong>Download now and Start improving</strong> over
-      <strong>Link in bio</strong>. Those two live in <code>config.json</code> under
-      <code>fixed</code>.
+      Slides 1 and 7 take a wide photo. Slide 6 takes a tall one, next to the
+      screenshot. The other four pictures are fixed app captures in
+      <code>assets/screens/</code> and the app icon, and they do not change.
     </p>
     <p>
-      The four app screenshots are real captures kept in
-      <code>assets/screens/</code>. They do not change between carousels. Only the
-      headline over them, and the two player photos on slides 1, 6 and 7, are
-      different each time.
+      Every headline is fixed too. Slide 2 always reads <code>1.Drillr</code>
+      and slide 7 always reads <strong>Download now and Start improving</strong>
+      over <strong>Link in bio</strong>.
     </p>
 
     <div class="note key">
@@ -769,177 +747,79 @@ backgrounds/portrait/    <span class="c">&larr; 8+   about 2:3, tall</span></pre
 
   <section>
     <h2>Making a carousel</h2>
-    <p class="sub">The loop you will actually run.</p>
+    <p class="sub">One command. There is no second step.</p>
 
-    <div class="note key">
-      <p class="note-title">Start here: one command does all of it</p>
-      <div class="cmd">
-        <div class="cmd-label">terminal</div>
-        <pre>node slideshow.mjs go</pre>
-      </div>
-      <p>
-        It puts the brief on your clipboard, waits while you paste it into a
-        chatbot, reads the reply straight back off your clipboard, shows you each
-        carousel, and renders the ones you approve. No files to create, nothing
-        to copy out of the terminal window.
-      </p>
-      <p>
-        It still stops and asks before anything renders. You type <code>y</code>
-        to approve a carousel or press Enter to leave it as a draft. Everything
-        below is the same loop done a step at a time, which is worth reading once
-        so you know what <code>go</code> is doing on your behalf.
-      </p>
+    <div class="cmd">
+      <div class="cmd-label">terminal</div>
+      <pre>node slideshow.mjs make               <span class="c"># one carousel</span>
+node slideshow.mjs make --count 3     <span class="c"># three, each with different photos</span></pre>
     </div>
 
-    <ol class="steps">
-      <li>
-        <div>
-          <h3>Get the brief</h3>
-          <div class="cmd">
-            <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs brief --count 3</pre>
-          </div>
-          <p>
-            Prints what Drillr is, the copy rules, a description of what each of the
-            four screenshots shows, and every hook used so far so the assistant can
-            pick a fresh angle. It also puts the whole thing on your clipboard, so
-            there is nothing to select out of the terminal.
-          </p>
-        </div>
-      </li>
+    <p>
+      Writes <code>out/&lt;id&gt;/01.jpg</code> through <code>07.jpg</code> at
+      1080&times;1920, plus a <code>caption.txt</code> with the hashtags already
+      attached. That folder is the finished post. The id is just the date and a
+      number, so <code>out/</code> stays in order.
+    </p>
 
-      <li>
-        <div>
-          <h3>Paste it into a chatbot</h3>
-          <p>
-            Claude, ChatGPT, Gemini, whatever you already use - the brief carries all
-            its own context, so nothing depends on which one. Free tiers are fine.
-            It comes back with a JSON array. Copy that reply.
-          </p>
-          <p>
-            Do not bother tidying it. If it wraps the JSON in a sentence or a code
-            fence, the importer finds the array anyway.
-          </p>
-        </div>
-      </li>
+    <p>
+      Upload the folder to TikTok by hand, then tell the tool it went out so it
+      stops showing as pending:
+    </p>
 
-      <li>
-        <div>
-          <h3>Import and read it</h3>
-          <div class="cmd">
-            <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs import</pre>
-          </div>
-          <p>
-            Reads your clipboard. There is no file to make.
-          </p>
+    <div class="cmd">
+      <div class="cmd-label">terminal</div>
+      <pre>node slideshow.mjs list
+node slideshow.mjs publish &lt;id&gt; --manual</pre>
+    </div>
 
-          <div class="note key">
-            <p class="note-title">If you would rather use a file</p>
-            <p>
-              <code>import</code> takes the reply from whichever of these it finds
-              first, so the old way still works:
-            </p>
-            <div class="cmd">
-              <div class="cmd-label">terminal</div>
-              <pre>node slideshow.mjs import --from drafts.json   <span class="c"># a file you create</span>
-node slideshow.mjs import --paste             <span class="c"># force the clipboard</span>
-... | node slideshow.mjs import               <span class="c"># piped in</span></pre>
-            </div>
-            <p>
-              Nothing ships a <code>drafts.json</code> and no command writes one - if
-              you go that route you create it yourself, beside
-              <code>slideshow.mjs</code>. On Windows, check your editor did not save
-              it as <code>drafts.json.txt</code>.
-            </p>
-          </div>
-          <p>
-            Prints each carousel as it queues it, and flags anything off - hype words,
-            invented statistics, a hook already in the queue, a headline long enough to
-            wrap to three lines. Fix wording directly in <code>state/queue.json</code>;
-            the text fields are all free text.
-          </p>
-
-          <div class="note key">
-            <p class="note-title">The length warnings are about the drawing, not the writing</p>
-            <p>
-              A feature headline over 60 characters gets flagged because at this size
-              it wraps to a third line of heavy type and pushes the screenshot down out
-              of the slide. Under 25 and it renders as one short line with a lot of
-              white space above the phone. Both are worth fixing before you approve;
-              neither stops the render.
-            </p>
-          </div>
-        </div>
-      </li>
-
-      <li>
-        <div>
-          <h3>Approve</h3>
-          <div class="cmd">
-            <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs list          <span class="c"># see the queue</span>
-node slideshow.mjs approve all</pre>
-          </div>
-          <p>
-            This is the gate. Nothing renders until you do this, and doing it means
-            you read the copy.
-          </p>
-        </div>
-      </li>
-
-      <li>
-        <div>
-          <h3>Render</h3>
-          <div class="cmd">
-            <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs render all</pre>
-          </div>
-          <p>
-            Writes <code>out/&lt;id&gt;/01.jpg</code> through <code>07.jpg</code> at
-            1080&times;1920, plus a <code>caption.txt</code> with the hashtags already
-            attached. That folder is the finished post.
-          </p>
-        </div>
-      </li>
-
-      <li>
-        <div>
-          <h3>Post it, then close the loop</h3>
-          <div class="cmd">
-            <div class="cmd-label">terminal</div>
-            <pre>node slideshow.mjs publish &lt;id&gt; --manual</pre>
-          </div>
-          <p>
-            Upload the folder to TikTok by hand, then run this. It does not talk to
-            TikTok - it marks the post done so its hook joins the do-not-repeat list
-            next time you run <code>brief</code>.
-          </p>
-        </div>
-      </li>
-    </ol>
+    <div class="note key">
+      <p class="note-title">Run it again and you get a different carousel</p>
+      <p>
+        Same words, different photos. The tool picks the ones it has not used
+        for longest and keeps a record, so it works through your folders rather
+        than landing on the same three shots every time.
+      </p>
+      <p>
+        That record is doing more work here than you might think. Two posts a
+        week apart say exactly the same thing, so the photos are the only thing
+        stopping them from reading as a duplicate. A thin folder is worth
+        fixing - <code>doctor</code> tells you how many photos each carousel
+        spends.
+      </p>
+    </div>
   </section>
 
   <section>
-    <h2>Making the original set again</h2>
-    <p class="sub">If you just want the old carousels back with fresh photos.</p>
+    <h2>Changing the words</h2>
+    <p class="sub">They are in one file, and nothing else writes them.</p>
+
     <p>
-      <code>reference-copy.json</code> is the exact wording the original carousels
-      used, with two typos corrected - <code>Drill</code> became <code>Drillr</code> in
-      two headlines, and a stray comma came out of "Drill gives, you tips". It imports
-      like any other draft file:
+      Open <code>config.json</code> and look for <code>script</code>. There is
+      one entry per slide, and the <code>text</code> is what gets drawn:
     </p>
+
     <div class="cmd">
-      <div class="cmd-label">terminal</div>
-      <pre>node slideshow.mjs import --from reference-copy.json
-node slideshow.mjs approve all
-node slideshow.mjs render</pre>
+      <div class="cmd-label">config.json</div>
+      <pre>{ "type": "screen",
+  "text": "Drillr builds you a personalized meal plan",
+  "image": "assets/screens/diet.jpg" }</pre>
     </div>
+
     <p>
-      You can only do this once as-is: the importer skips a hook that is already in
-      the queue, so a second run says so and queues nothing. Change the hook if you
-      want it twice.
+      Edit a line, save, and every carousel you make afterwards uses the new
+      wording. The text that ships is what the original carousels said, with two
+      typos fixed.
     </p>
+
+    <div class="note caution">
+      <p class="note-title">Keep a headline under about 60 characters</p>
+      <p>
+        Past that it wraps to a third line of heavy type and shoves the phone
+        screenshot off the bottom of the slide. <code>doctor</code> prints the
+        whole script and flags a line that is too long, so run it after an edit.
+      </p>
+    </div>
   </section>
 
   <section>
@@ -987,6 +867,10 @@ node slideshow.mjs render</pre>
         a headline may name the screen it sits over, and must then say what that screen
         does for the player.
       </p>
+      <p>
+        Nothing enforces that, because nothing writes these lines. It only
+        matters if you edit them, and this is the line to stay on:
+      </p>
       <div class="cmd">
         <div class="cmd-label">the line</div>
         <pre>yes   Drillr builds your weekly plan with drills for your position
@@ -995,8 +879,9 @@ no    Log calories, macros, water intake and pre-match meals
 no    Radar chart, pro tips and four attribute scores</pre>
       </div>
       <p>
-        Everything else carries over unchanged. No invented numbers, no promising
-        anyone a trial or a scout, nothing implying users can see each other.
+        The rest of the house style applies too. No invented numbers, no promising
+        anyone a trial or a scout, nothing implying users can see each other, and
+        plain hyphens rather than dashes.
       </p>
     </div>
   </section>
@@ -1016,11 +901,10 @@ no    Radar chart, pro tips and four attribute scores</pre>
           slot and keeps its own shape.
         </p>
         <p>
-          If a new screenshot shows something different from the old one, update the
-          matching <code>brief</code> line in <code>config.json</code> too. That text
-          is what tells the copy model what the slide is showing, and it is the only
-          thing standing between you and a headline about the diet tab sitting over
-          the progress screen.
+          If a new screenshot shows something different from the old one, change
+          the <code>text</code> on that slide in <code>config.json</code> as well.
+          Nothing checks that the headline matches the picture underneath it -
+          that pairing is yours to keep straight.
         </p>
       </div>
     </details>
@@ -1091,34 +975,6 @@ python render.py --calibrate out/&lt;id&gt;</pre>
     <p class="sub">The things that actually go wrong.</p>
 
     <details>
-      <summary>go says the clipboard still holds the brief</summary>
-      <div class="inner">
-        <p>
-          You pressed Enter without copying the assistant's reply, so the brief
-          <code>go</code> put there is still the thing on the clipboard. Copy the
-          reply and run <code>go</code> again - it checks for this on purpose,
-          because the alternative is a JSON parse error on 80 lines of prompt.
-        </p>
-      </div>
-    </details>
-
-    <details>
-      <summary>import says no such file: ...drafts.json</summary>
-      <div class="inner">
-        <p>
-          Only happens if you passed <code>--from</code>. Without it,
-          <code>import</code> reads your clipboard and there is no file involved
-          at all - so the quickest fix is usually to drop the flag.
-        </p>
-        <p>
-          If you do want the file: you create it yourself, beside
-          <code>slideshow.mjs</code>. Nothing ships one and no command writes one.
-          On Windows, check the name is not <code>drafts.json.txt</code>.
-        </p>
-      </div>
-    </details>
-
-    <details>
       <summary>render says a photo folder is empty</summary>
       <div class="inner">
         <p>
@@ -1145,11 +1001,11 @@ python render.py --calibrate out/&lt;id&gt;</pre>
       <summary>A headline wrapped to three lines and squashed the screenshot</summary>
       <div class="inner">
         <p>
-          The copy is too long. The renderer shrinks the type by up to a fifth to keep
-          a headline on two lines, and past that it gives up and takes the third line
-          rather than shrinking into illegibility. <code>import</code> warns about this
-          at 60 characters. Shorten the line in <code>state/queue.json</code> and
-          re-render.
+          That line in <code>config.json</code> is too long. The renderer shrinks
+          the type by up to a fifth to keep a headline on two lines, and past that
+          it gives up and takes the third line rather than shrinking into
+          illegibility. <code>doctor</code> flags this at 60 characters. Shorten
+          the line and make the carousel again.
         </p>
       </div>
     </details>
@@ -1172,33 +1028,23 @@ python render.py --calibrate out/&lt;id&gt;</pre>
     </details>
 
     <details>
-      <summary>The post has no copy for some slides</summary>
+      <summary>Two carousels came out with the same photos</summary>
       <div class="inner">
         <p>
-          The post was drafted before <code>config.json</code>'s script changed, so it
-          is missing a headline the script now asks for. Rather than draw a blank
-          slide, <code>render</code> stops and says how many are missing. Add them in
-          <code>state/queue.json</code>, or delete the post and draft it again.
+          Your folders are too thin. Each carousel spends two wide photos and one
+          tall one, and once the tool runs out of unused ones it starts again on
+          the oldest and says so. Add more, or space the posts out.
         </p>
       </div>
     </details>
 
     <details>
-      <summary>nothing approved / nothing rendered</summary>
+      <summary>A slide changed its wording and I did not touch it</summary>
       <div class="inner">
         <p>
-          Not an error. It is the state machine telling you the previous step has not
-          been done. Run <code>list</code> to see where each post has got to.
-        </p>
-      </div>
-    </details>
-
-    <details>
-      <summary>import skipped one of my carousels</summary>
-      <div class="inner">
-        <p>
-          Either it had no hook, or that hook is already in the queue. It prints which
-          and why. Duplicates get skipped rather than queued twice.
+          <code>config.json</code> is the only place the words live, so something
+          edited that file. Old carousels already in <code>out/</code> are not
+          affected - they were drawn with whatever the text said at the time.
         </p>
       </div>
     </details>
@@ -1207,8 +1053,8 @@ python render.py --calibrate out/&lt;id&gt;</pre>
   <footer>
     <p>
       There is a <code>README.md</code> in the zip with the rest of it - how the
-      geometry was worked out from the original slides, the full copy rules, and what
-      turning on auto-posting would take.
+      geometry was worked out from the original slides, and what turning on
+      auto-posting would take.
     </p>
   </footer>
 
