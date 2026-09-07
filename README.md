@@ -9,6 +9,12 @@ font file and the queue machinery and nothing else - different canvas,
 different type treatment, different slide script, different copy rules. Running
 one does not touch the other's queue or photo pools.
 
+Handing this to someone who has not seen it before? Point them at
+`TUTORIAL.html` - a self-contained page, opened straight from the folder in any
+browser, no server and no hosting anywhere. It walks the whole loop, covers the
+two things that stop every Windows machine before the first command runs, and
+spells out the three ways this template behaves differently from the other one.
+
     hook -> 1.Drillr -> daily session -> position -> diet -> progress -> close
 
 Seven slides, fixed. Four of them are app screenshots that never change; the
@@ -238,6 +244,7 @@ account out - and it fails on the *next* run, not the one that caused it.
 
 ## Files
 
+    TUTORIAL.html         the walkthrough to hand to someone new - open in a browser
     slideshow.mjs         the CLI - every verb
     render.py             Pillow renderer; the whole look lives here
     config.json           the 7-slide script, fixed copy, pools, TikTok settings
