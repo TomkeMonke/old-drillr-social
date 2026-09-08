@@ -111,8 +111,13 @@ python prep-screen.py raw.png out.jpg --top 185              # cut deeper
 ```
 
 It takes the status bar off the top and the scroll indicator off the sides, and
-leaves the bottom alone because the template runs the screenshot off the foot
-of the slide anyway. `--probe` prints where the first row of real content is,
+leaves the bottom alone by default, because the template runs the screenshot off
+the foot of the slide anyway.
+
+`--bottom N` is for when something at the foot of the screen has to go rather
+than be bled off - a Share button, or a section that belongs to a different part
+of the app. Find a flat row of page background to cut on the same way you would
+at the top: a cut through a card or a heading reads as a rendering bug. `--probe` prints where the first row of real content is,
 which is what you need when the capture was taken mid-scroll and a slice of the
 previous screen is still up there.
 
