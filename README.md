@@ -40,9 +40,23 @@ repo. They also rotate - see `assets/screens/README.md` for capturing more.
 ## Making carousels
 
 ```bash
-node slideshow.mjs make               # one carousel
-node slideshow.mjs make --count 3     # three, each with different photos
+node slideshow.mjs go
 ```
+
+It prints what every slide has to choose from, asks how many carousels you
+want (1-100), and makes them. The table comes **before** the question on
+purpose: the number of pictures each slide can draw from is the thing that
+should decide how many carousels are worth making, and asking for twenty out
+of a pool of one gets you twenty copies of the same slide.
+
+Same thing without the question, for scripts:
+
+```bash
+node slideshow.mjs make --count 3
+```
+
+`go` refuses to run without a terminal, so nothing automated ends up blocked
+on a prompt nobody is there to answer.
 
 That is the whole loop. It writes `out/<id>/01.jpg` through `07.jpg` at
 1080x1920 plus a `caption.txt` with the hashtags attached. Upload the folder by
@@ -229,7 +243,7 @@ account out - and it fails on the *next* run, not the one that caused it.
 ## Files
 
     TUTORIAL.html         the walkthrough to hand to someone new - open in a browser
-    slideshow.mjs         the CLI: make, list, publish, doctor, fonts
+    slideshow.mjs         the CLI: go, make, list, publish, doctor, fonts
     render.py             Pillow renderer; the whole look lives here
     config.json           the seven slides - their words, their pictures - plus
                           the pools and the TikTok settings

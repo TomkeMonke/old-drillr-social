@@ -428,7 +428,7 @@
 
     <div class="cmd">
       <div class="cmd-label">terminal</div>
-      <pre>node slideshow.mjs make</pre>
+      <pre>node slideshow.mjs go</pre>
     </div>
 
     <p>
@@ -755,8 +755,43 @@ backgrounds/portrait/    <span class="c">&larr; 8+   about 2:3, tall</span></pre
 
     <div class="cmd">
       <div class="cmd-label">terminal</div>
-      <pre>node slideshow.mjs make               <span class="c"># one carousel</span>
-node slideshow.mjs make --count 3     <span class="c"># three, each with different photos</span></pre>
+      <pre>node slideshow.mjs go</pre>
+    </div>
+
+    <p>
+      It shows you what every slide has to choose from, asks how many carousels
+      you want, and makes them. Anything from 1 to 100; press Enter for one.
+    </p>
+
+    <div class="cmd">
+      <div class="cmd-label">what it asks</div>
+      <pre>Pictures each slide can draw from:
+
+  slide 1                backgrounds/landscape      1
+  slide 3                assets/screens/home        4
+  slide 4                assets/screens/tips        2
+  slide 5                assets/screens/diet        5
+  slide 6                assets/screens/progress    3
+  slide 7                backgrounds/landscape      1
+
+  ! backgrounds/landscape has 1 - slides 1 and 7 will be
+    the same picture every time
+
+How many carousels? [1-100, blank for 1]:</pre>
+    </div>
+
+    <p>
+      The table is printed before the question rather than after, because it is
+      the thing that should decide the number. Asking for twenty carousels when
+      a slide has one picture to choose from gets you twenty copies of that
+      slide, which is the whole thing the folders exist to avoid.
+    </p>
+
+    <p>The same thing without the question, if you are scripting it:</p>
+
+    <div class="cmd">
+      <div class="cmd-label">terminal</div>
+      <pre>node slideshow.mjs make --count 3</pre>
     </div>
 
     <p>

@@ -1,7 +1,7 @@
 // Drillr CLASSIC TikTok carousel pipeline.
 //
-//   node slideshow.mjs make            # make one carousel  <- the whole tool
-//   node slideshow.mjs make --count 3  # or three of them
+//   node slideshow.mjs go              # asks how many, then makes them  <- start here
+//   node slideshow.mjs make --count 3  # the same thing without the question
 //   node slideshow.mjs list            # what has been made
 //   node slideshow.mjs publish <id> --manual
 //   node slideshow.mjs doctor          # is everything wired up
@@ -39,6 +39,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import readline from 'node:readline/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -210,25 +211,123 @@ function makeOne(queue) {
   return post;
 }
 
-function make() {
-  const problems = preflight();
-  if (problems.length) {
-    console.log('Cannot render yet:\n');
-    for (const problem of problems) console.log(`  ! ${problem}`);
-    console.log('\nFull check: node slideshow.mjs doctor');
-    return;
-  }
-
-  const count = Math.max(1, Number(flag('count', '1')) || 1);
+/** Draw `count` carousels and print where they went. Shared by `make` and `go`. */
+function makeMany(count) {
   const queue = queueLib.load();
   const made = [];
-
   for (let i = 0; i < count; i += 1) made.push(makeOne(queue));
   queueLib.save(queue);
 
   console.log(`\n${made.length} carousel(s) made.`);
   console.log('\nUpload each folder by hand, then close the loop:');
   for (const post of made) console.log(`  node slideshow.mjs publish ${post.id} --manual`);
+  return made;
+}
+
+/** Blocking problems, printed. True if it is safe to carry on. */
+function ready() {
+  const problems = preflight();
+  if (!problems.length) return true;
+  console.log('Cannot render yet:\n');
+  for (const problem of problems) console.log(`  ! ${problem}`);
+  console.log('\nFull check: node slideshow.mjs doctor');
+  return false;
+}
+
+function make() {
+  if (!ready()) return;
+  makeMany(Math.max(1, Number(flag('count', '1')) || 1));
+}
+
+// ---------------------------------------------------------------- go
+
+/** What each slide has to choose from, in slide order, for the `go` preamble. */
+function pictureDepth() {
+  const rows = [];
+  for (const [i, slide] of CONFIG.script.entries()) {
+    for (const key of ['image', 'aside']) {
+      const ref = slide[key];
+      if (!ref?.startsWith('pool:')) continue;
+      const name = ref.slice(5);
+      rows.push({ slide: i + 1, key, name, count: pool.listPool(name).length });
+    }
+  }
+  return rows;
+}
+
+/**
+ * The one command: ask how many, then draw them.
+ *
+ * The depth table is printed BEFORE the prompt rather than after, because it is
+ * the thing that should decide the number. Asking for twenty carousels out of a
+ * pool of one gets you twenty copies of the same slide, which is the exact
+ * outcome the rotation exists to avoid - and the moment to notice that is
+ * before typing the number, not in the output.
+ *
+ * Interactive only. A script wanting N without a prompt uses `make --count N`,
+ * so nothing automated can end up blocked on a question nobody is there to
+ * answer.
+ */
+async function go() {
+  if (!process.stdin.isTTY) {
+    throw new Error(
+      '`go` asks a question, so it needs a real terminal.\n' +
+        '  In a script:  node slideshow.mjs make --count N'
+    );
+  }
+  if (!ready()) return;
+
+  const depth = pictureDepth();
+  console.log('Pictures each slide can draw from:\n');
+  for (const row of depth) {
+    const label = `slide ${row.slide}${row.key === 'aside' ? ' (player shot)' : ''}`;
+    console.log(`  ${label.padEnd(22)} ${row.name.padEnd(26)} ${row.count}`);
+  }
+
+  // Anything with one image repeats on every single carousel, however many are
+  // asked for. Worth saying plainly here - `doctor` says it too, but nobody
+  // runs doctor before every batch.
+  // One line per POOL, not per slide. backgrounds/landscape feeds slides 1 and
+  // 7, and saying so twice reads like two separate problems.
+  const thin = new Map();
+  for (const row of depth.filter((r) => r.count < 2)) {
+    if (!thin.has(row.name)) thin.set(row.name, { count: row.count, slides: [] });
+    thin.get(row.name).slides.push(row.slide);
+  }
+  if (thin.size) {
+    console.log('');
+    for (const [name, { count, slides }] of thin) {
+      const where = slides.length > 1 ? `slides ${slides.join(' and ')}` : `slide ${slides[0]}`;
+      console.log(`  ! ${name} has ${count} - ${where} will be the same picture every time`);
+    }
+  }
+
+  const smallest = Math.min(...depth.map((r) => r.count));
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    let count = Number(flag('count', ''));
+    while (!Number.isInteger(count) || count < 1 || count > 100) {
+      const answer = (await rl.question('\nHow many carousels? [1-100, blank for 1]: ')).trim();
+      if (answer === '') {
+        count = 1;
+        break;
+      }
+      count = Number(answer);
+      if (!Number.isInteger(count) || count < 1 || count > 100) {
+        console.log('  a whole number from 1 to 100, please');
+      }
+    }
+
+    if (smallest > 0 && count > smallest) {
+      console.log(
+        `\n  note: at ${count} carousels the thinnest pool (${smallest}) comes round ` +
+          `${Math.ceil(count / smallest)} times, so some slides repeat.`
+      );
+    }
+    makeMany(count);
+  } finally {
+    rl.close();
+  }
 }
 
 // ---------------------------------------------------------------- list
@@ -457,7 +556,7 @@ function doctor() {
 
 // ---------------------------------------------------------------- main
 
-const VERBS = { make, list, publish, doctor, fonts };
+const VERBS = { go, make, list, publish, doctor, fonts };
 
 if (!verb || !VERBS[verb]) {
   console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n\n')[0]);
