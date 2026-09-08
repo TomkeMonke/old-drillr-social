@@ -24,10 +24,15 @@
 // clipboard, no copy model, no drafts.json, no do-not-repeat ledger. `make`
 // picks photos, renders, and is done.
 //
-// What is left is the part that still has to make a decision: WHICH photos.
-// `lib/backgrounds.mjs` rotates the pools least-recently-used first and keeps
-// a ledger, which is now the only thing standing between two carousels a week
+// What is left is the part that still has to make a decision: WHICH pictures.
+// `lib/pools.mjs` rotates every pool least-recently-used first and keeps a
+// ledger, which is now the only thing standing between two carousels a week
 // apart and them looking like the same post.
+//
+// That includes the four app screenshots. They used to be one fixed file each,
+// so slides 3 to 6 were byte-identical on every carousel - which is what a feed
+// dedupe is built to spot. Each slot is a FOLDER of real device captures now,
+// and each carousel takes the one it has not used for longest.
 //
 // Install (one-off):
 //   pip install Pillow
@@ -38,7 +43,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import * as queueLib from './lib/queue.mjs';
-import * as pool from './lib/backgrounds.mjs';
+import * as pool from './lib/pools.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO = DIR; // standalone repo: the tool root IS the repo root
@@ -65,7 +70,7 @@ for (let i = 1; i < args.length; i += 1) {
   positional.push(args[i]);
 }
 
-/** How many photos each pool owes one carousel, keyed by pool name. Derived
+/** How many images each pool owes one carousel, keyed by pool path. Derived
  *  from the script so adding a slide cannot leave a checker looking at the
  *  wrong folders. */
 function poolDemand() {
@@ -80,6 +85,19 @@ function poolDemand() {
 }
 
 const poolsUsed = () => Object.keys(poolDemand());
+
+/** Days before a repeat is worth warning about, per pool.
+ *
+ *  Zero for the screen slots. They hold a handful of real device captures and
+ *  are MEANT to come round quickly; warning every run about a pool doing its
+ *  job trains you to ignore the warnings that matter. */
+function cooldownFor(name) {
+  const quiet = CONFIG.pools.noCooldown ?? [];
+  return quiet.some((prefix) => name.startsWith(prefix)) ? 0 : CONFIG.pools.cooldownDays;
+}
+
+/** A pool that feeds an app-screenshot slide, as opposed to a photo pool. */
+const isScreenPool = (name) => name.startsWith('assets/screens/');
 
 // ---------------------------------------------------------------- fonts
 
@@ -130,10 +148,10 @@ function makeOne(queue) {
   // pool is one warning at the top of the run rather than a surprise on slide 6.
   const picked = {};
   const spent = [];
-  for (const [category, count] of Object.entries(poolDemand())) {
-    const chosen = pool.choose(category, count, CONFIG.backgrounds.cooldownDays);
+  for (const [name, count] of Object.entries(poolDemand())) {
+    const chosen = pool.choose(name, count, cooldownFor(name));
     for (const warning of chosen.warnings) console.log(`  ! ${warning}`);
-    picked[category] = chosen.files.slice();
+    picked[name] = chosen.files.slice();
     spent.push(...chosen.files);
   }
 
@@ -186,7 +204,7 @@ function makeOne(queue) {
     createdAt: new Date().toISOString(),
     outDir: path.relative(REPO, outDir),
     caption_full: caption,
-    backgrounds: spent.map((f) => path.basename(f)),
+    pictures: spent.map((f) => path.relative(REPO, f).split(path.sep).join('/')),
   };
   queue.posts.push(post);
   return post;
@@ -224,7 +242,7 @@ function list() {
     console.log(`\n${state.toUpperCase()} (${posts.length})`);
     for (const post of posts) {
       console.log(`  ${post.id}`);
-      console.log(`    photos: ${(post.backgrounds ?? []).join(', ') || 'none recorded'}`);
+      console.log(`    ${(post.pictures ?? []).join('  ') || 'none recorded'}`);
     }
   }
 }
@@ -327,11 +345,13 @@ function preflight() {
     }
   }
 
-  for (const category of poolsUsed()) {
-    if (!pool.listPool(category).length) {
+  for (const name of poolsUsed()) {
+    if (!pool.listPool(name).length) {
       problems.push(
-        `backgrounds/${category} is empty - drop photos into ${path.relative(REPO, pool.poolDir(category))}` +
-          ` (see backgrounds/README.md, the shapes are not interchangeable)`
+        `${name} is empty - put images in it` +
+          (isScreenPool(name)
+            ? ' (see assets/screens/README.md)'
+            : ' (see backgrounds/README.md, the shapes are not interchangeable)')
       );
     }
   }
@@ -391,18 +411,33 @@ function doctor() {
   }
 
   const demand = poolDemand();
-  for (const category of poolsUsed()) {
-    const files = pool.listPool(category);
+  for (const name of poolsUsed()) {
+    const used = pool.usage(name);
     ok(
-      `backgrounds/${category}: ${files.length} photo(s), ${demand[category]} used per carousel`,
-      files.length > 0,
-      `drop photos into ${path.relative(REPO, pool.poolDir(category))} - see backgrounds/README.md, the shapes matter`
+      `${name}: ${used.length} image(s), ${demand[name]} per carousel`,
+      used.length > 0,
+      `put images in ${path.relative(REPO, pool.poolDir(name))}` +
+        (isScreenPool(name) ? ' - see assets/screens/README.md' : ' - see backgrounds/README.md, the shapes matter')
     );
+    if (!used.length) continue;
+
+    // Use counts, so it is obvious whether the rotation is actually working
+    // and which image is up next. `>` marks the one the next carousel takes.
+    const next = used.slice().sort((a, b) => a.uses - b.uses)[0];
+    console.log(`       ${used.map((u) => `${u.name === next.name ? '>' : ' '}${u.name} x${u.uses}`).join('  ')}`);
+
+    // The whole reason the screens became folders. One capture in a slot means
+    // that slide is the same image on every post, which is exactly what a feed
+    // dedupe is built to spot - so fail rather than quietly passing.
+    if (isScreenPool(name) && used.length < 2) {
+      console.log('       ! only one capture - this slide is identical on every carousel');
+      bad += 1;
+    }
     // Not a failure. The pool degrades to repeats plus a warning rather than
     // refusing to run, but a pool that cannot fill one carousel without
-    // reusing a photo is worth saying out loud before the render, not during.
-    if (files.length > 0 && files.length < demand[category]) {
-      console.log(`       ! only ${files.length} for ${demand[category]} slots - a photo will repeat inside one carousel`);
+    // reusing an image is worth saying out loud before the render, not during.
+    if (used.length < demand[name]) {
+      console.log(`       ! only ${used.length} for ${demand[name]} slots - one will repeat inside a single post`);
     }
   }
 

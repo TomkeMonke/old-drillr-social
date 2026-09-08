@@ -26,8 +26,9 @@
     "comes from.",
     "",
     "  text:   the headline. Slide 7 also has `footer`, the line under the photo.",
-    "  image:  a file in assets/, or `pool:<folder>` to take the next photo from",
-    "          backgrounds/<folder>. `aside` is the second picture on slide 6.",
+    "  image:  `pool:<path>` takes the next image from that folder, or a plain",
+    "          path for a single fixed file. `aside` is the second picture on",
+    "          slide 6.",
     "",
     "The wording is the original set's, with two typos fixed: `Drill` was `Drillr`",
     "in two headlines, and 'Drill gives, you tips' had a stray comma.",
@@ -36,14 +37,15 @@
     "line of heavy type and pushes the screenshot off the bottom of the slide -",
     "`doctor` checks this and will tell you.",
     "",
-    "The four screens/*.jpg are fixed app captures. Re-shoot them and drop the",
-    "new files in with the same names; nothing else needs to change."
+    "Each of the four app screens is a FOLDER of captures, not one file, and a",
+    "carousel takes the least-recently-used one from each. That is what stops",
+    "slides 3-6 being the same image on every post - see assets/screens/README.md."
   ],
   "script": [
     {
       "type": "hook",
       "text": "Top apps you need to improve your football skills",
-      "image": "pool:landscape"
+      "image": "pool:backgrounds/landscape"
     },
     {
       "type": "icon",
@@ -53,46 +55,54 @@
     {
       "type": "screen",
       "text": "Drillr builds your weekly plan with drills for your position",
-      "image": "assets/screens/home.jpg"
+      "image": "pool:assets/screens/home"
     },
     {
       "type": "screen",
       "text": "Drillr gives you tips to master the basics of the game",
-      "image": "assets/screens/tips.jpg"
+      "image": "pool:assets/screens/tips"
     },
     {
       "type": "screen",
       "text": "Drillr builds you a personalized meal plan",
-      "image": "assets/screens/diet.jpg"
+      "image": "pool:assets/screens/diet"
     },
     {
       "type": "progress",
       "text": "Drillr tracks your progress every step of the way",
-      "image": "assets/screens/progress.jpg",
-      "aside": "pool:portrait"
+      "image": "pool:assets/screens/progress",
+      "aside": "pool:backgrounds/portrait"
     },
     {
       "type": "cta",
       "text": "Download now and Start improving",
       "footer": "Link in bio",
-      "image": "pool:landscape"
+      "image": "pool:backgrounds/landscape"
     }
   ],
 
-  "backgrounds": {
+  "pools": {
     "_comment": [
-      "landscape carries the hook and the CTA photo - both sit in a wide slot,",
-      "so a 9:16 wallpaper lands there badly. portrait carries the player shot",
-      "beside the progress screenshot. Kept apart rather than cropped from one",
-      "pool because the template shows each photo at its own aspect.",
+      "Every `pool:` in the script above. Images are picked least-recently-used",
+      "first and the choice is recorded in state/pools-used.json.",
       "",
-      "These pools are the ONLY thing that varies between carousels now, so the",
-      "cooldown matters more than it used to: it is what stops two posts a week",
-      "apart from looking like the same post."
+      "backgrounds/landscape carries the hook and the CTA photo - both sit in a",
+      "wide slot, so a 9:16 wallpaper lands there badly. backgrounds/portrait",
+      "carries the player shot beside the progress screenshot. Kept apart rather",
+      "than cropped from one pool because the template shows each photo at its",
+      "own aspect.",
+      "",
+      "cooldownDays: warn when a photo comes round again inside this many days.",
+      "It is a signal that the pool is too thin, which matters more here than in",
+      "the sibling tool - the words never change, so the pictures are the only",
+      "thing keeping two posts from reading as the same post.",
+      "",
+      "noCooldown: pools that are SUPPOSED to come round quickly, matched by",
+      "path prefix. A screen slot holds a handful of real device captures, so",
+      "warning every time one repeats would just be noise."
     ],
-    "landscape": "landscape",
-    "portrait": "portrait",
-    "cooldownDays": 45
+    "cooldownDays": 45,
+    "noCooldown": ["assets/screens"]
   },
 
   "caption": {

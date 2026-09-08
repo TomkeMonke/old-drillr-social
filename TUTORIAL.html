@@ -476,8 +476,12 @@
 
     <p>
       Slides 1 and 7 take a wide photo. Slide 6 takes a tall one, next to the
-      screenshot. The other four pictures are fixed app captures in
-      <code>assets/screens/</code> and the app icon, and they do not change.
+      screenshot. Slides 3 to 6 each take an app capture from their own folder
+      under <code>assets/screens/</code>, and slide 2 is the app icon.
+    </p>
+    <p>
+      Every one of those is a rotating folder, so no two carousels in a row use
+      the same picture in the same slot.
     </p>
     <p>
       Every headline is fixed too. Slide 2 always reads <code>1.Drillr</code>
@@ -776,16 +780,19 @@ node slideshow.mjs publish &lt;id&gt; --manual</pre>
     <div class="note key">
       <p class="note-title">Run it again and you get a different carousel</p>
       <p>
-        Same words, different photos. The tool picks the ones it has not used
-        for longest and keeps a record, so it works through your folders rather
-        than landing on the same three shots every time.
+        Same words, different pictures - including the app screenshots, which
+        each come from a folder of captures rather than one fixed file. The tool
+        takes the one it has not used for longest and keeps a record, so it
+        works through your folders rather than landing on the same shots every
+        time.
       </p>
       <p>
         That record is doing more work here than you might think. Two posts a
-        week apart say exactly the same thing, so the photos are the only thing
-        stopping them from reading as a duplicate. A thin folder is worth
-        fixing - <code>doctor</code> tells you how many photos each carousel
-        spends.
+        week apart say exactly the same thing, so the pictures are the only
+        thing stopping them from reading as a duplicate - and a feed that spots
+        duplicates will hold the later one's reach back. Thin folders are worth
+        fixing: <code>doctor</code> lists every picture with how often it has
+        been used, and fails a screen slot that has only one capture in it.
       </p>
     </div>
   </section>
@@ -900,14 +907,14 @@ no    Radar chart, pro tips and four attribute scores</pre>
       <summary>Replacing the app screenshots</summary>
       <div class="inner">
         <p>
-          The four captures live in <code>assets/screens/</code> as
-          <code>home.jpg</code>, <code>tips.jpg</code>, <code>diet.jpg</code> and
-          <code>progress.jpg</code>. Re-shoot them, drop the new files in under the
-          same names, and nothing else changes - the renderer scales each one to the
-          slot and keeps its own shape.
+          Each slide draws from a folder - <code>assets/screens/home/</code>,
+          <code>tips/</code>, <code>diet/</code>, <code>progress/</code>. Drop
+          another capture in and it joins the rotation; the filenames are never
+          read. <code>prep-screen.py</code> does the cropping, and that folder's
+          README has the capture recipe.
         </p>
         <p>
-          If a new screenshot shows something different from the old one, change
+          If a new capture shows something different from the old one, change
           the <code>text</code> on that slide in <code>config.json</code> as well.
           Nothing checks that the headline matches the picture underneath it -
           that pairing is yours to keep straight.
@@ -1034,12 +1041,32 @@ python render.py --calibrate out/&lt;id&gt;</pre>
     </details>
 
     <details>
-      <summary>Two carousels came out with the same photos</summary>
+      <summary>Two carousels came out with the same pictures</summary>
       <div class="inner">
         <p>
-          Your folders are too thin. Each carousel spends two wide photos and one
-          tall one, and once the tool runs out of unused ones it starts again on
-          the oldest and says so. Add more, or space the posts out.
+          Your folders are too thin. Each carousel spends two wide photos, one
+          tall one and one capture from each of the four screen slots, and once
+          the tool runs out of unused ones it starts again on the oldest and
+          says so. Run <code>doctor</code> to see the counts.
+        </p>
+      </div>
+    </details>
+
+    <details>
+      <summary>doctor says a slide is identical on every carousel</summary>
+      <div class="inner">
+        <p>
+          That screen slot has only one capture in it, so slides 3 to 6 cannot
+          vary there. Add another to
+          <code>assets/screens/&lt;slot&gt;/</code> - its README covers taking
+          one on the phone and cropping it with
+          <code>prep-screen.py</code>.
+        </p>
+        <p>
+          It has to be a genuinely different capture: a different day, a
+          different scroll position, a different position on the pitch. Re-saving
+          the same screenshot does not help, because what spots duplicates is
+          looking at the picture, not at the file.
         </p>
       </div>
     </details>

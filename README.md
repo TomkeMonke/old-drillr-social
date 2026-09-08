@@ -34,6 +34,9 @@ closing slide, `portrait/` (about 2:3) carries the player shot on slide 6.
 Photos are never cropped to fill a slot, so a tall wallpaper in `landscape/`
 renders as a narrow strip in the middle of a wide slot.
 
+The four app screenshots live in `assets/screens/<slot>/` and ship with the
+repo. They also rotate - see `assets/screens/README.md` for capturing more.
+
 ## Making carousels
 
 ```bash
@@ -58,7 +61,7 @@ and every carousel made afterwards carries the new wording.
 ```json
 { "type": "screen",
   "text": "Drillr builds you a personalized meal plan",
-  "image": "assets/screens/diet.jpg" }
+  "image": "pool:assets/screens/diet" }
 ```
 
 The wording shipped is the original set's, with two typos fixed: `Drill` was
@@ -72,15 +75,22 @@ this template.
 
 ## What varies between carousels
 
-Only the photos, which makes `lib/backgrounds.mjs` the one part of this that
-still makes a decision. It picks least-recently-used first and keeps a ledger
-in `state/backgrounds-used.json`, with a 45-day cooldown.
+Only the pictures, which makes `lib/pools.mjs` the one part of this that still
+makes a decision. Every `pool:` in the script picks least-recently-used first
+and records it in `state/pools-used.json`.
 
-That cooldown matters more here than it does in the sibling tool. There, two
-posts a week apart say different things; here they say exactly the same thing,
-so the photos are the *only* thing stopping them from reading as a duplicate.
-A pool of six is not enough - `doctor` will tell you how many each carousel
-spends.
+**Including the four app screenshots.** Those used to be one fixed file each,
+so slides 3 to 6 were byte-identical on every carousel the tool made - and with
+the copy fixed as well, a run of posts differed only in three photographs. A
+feed that dedupes on image similarity has every reason to treat the later ones
+as a repost and hold their reach back. Each screen slot is a folder of real
+device captures now; see `assets/screens/README.md` for how to add one.
+
+Least-recently-used rather than random on purpose: random can hand you the same
+picture twice in a row, which is the exact case this exists to prevent.
+
+`doctor` prints every pool with a use count per image and marks the one the
+next carousel will take. It fails a screen slot that has only one capture.
 
 ## The template
 
@@ -145,10 +155,16 @@ slide and 73/84px on the close, all in the reference's 1179px band.
 
 ### The app screenshots
 
-`assets/screens/*.jpg` are the four fixed captures, and `assets/app-icon.png`
-is the icon on slide 2. Re-shoot them and drop the new files in under the same
-names; nothing else changes. `config.json`'s `script` says which screen each
-slide shows and what the headline over it says.
+`assets/screens/<slot>/` holds the captures for each app-screen slide, and
+`assets/app-icon.png` is the icon on slide 2. Drop another capture into a slot
+and it joins the rotation - nothing else changes, the filenames are not read.
+`config.json`'s `script` says which slot each slide draws from and what the
+headline over it says.
+
+`prep-screen.py` turns a raw device screenshot into a variant: it cuts the
+status bar off the top and the scroll indicator off the sides. See
+`assets/screens/README.md` for the capture recipe and what a capture worth
+keeping looks like.
 
 The screenshots are pasted at their own aspect and run **past the foot of the
 band onto the black bar** - they are drawn onto the frame after the band, so
@@ -192,11 +208,17 @@ account out - and it fails on the *next* run, not the one that caused it.
 - **Six API requests per minute** per access token. One post is three calls.
 - **`init` succeeding is not `posted`.** TikTok downloads the images
   asynchronously; a bad image URL surfaces at the status poll, not at init.
-- **Photos are only spent on a successful render.** `record()` runs after
+- **Images are only spent on a successful render.** `record()` runs after
   `render.py` exits 0, so a crashed render does not burn the pool.
-- **A thin pool degrades, it does not throw.** Fewer photos than slots means a
+- **The ledger keys on the path, not the filename.** Every screen slot names
+  its captures `01.jpg`; keyed on the basename they would all share one entry
+  and the four slots would rotate in lockstep.
+- **A thin pool degrades, it does not throw.** Fewer images than slots means a
   repeat plus a warning, not a failed run. With the copy fixed, that repeat is
   the only thing anyone would notice, so read the warnings.
+- **A screen slot with one capture is a `doctor` failure, not a warning.** That
+  slide would be the same image on every post, which is the whole thing the
+  folders exist to avoid.
 - **Nothing here is shared with `drillr-social` at runtime.** Two records, two
   ledgers, two photo pools. Making a carousel here does not spend a background
   there.
@@ -212,9 +234,11 @@ account out - and it fails on the *next* run, not the one that caused it.
     config.json           the seven slides - their words, their pictures - plus
                           the pools and the TikTok settings
     lib/queue.mjs         the record of what has been made and posted
-    lib/backgrounds.mjs   pool rotation + the used-photo ledger
+    lib/pools.mjs         picture rotation + the used-image ledger
+    prep-screen.py        crops a raw device capture into a screen variant
     lib/tiktok.mjs        Content Posting API
-    assets/               the app icon and the four fixed app screenshots
+    assets/app-icon.png   slide 2
+    assets/screens/<slot>/  the app captures that rotate - see its README
     backgrounds/          photos you supply (gitignored) - see its README
-    state/                queue.json + backgrounds-used.json - this is the memory
+    state/                queue.json + pools-used.json - this is the memory
     out/                  rendered slides (gitignored)
