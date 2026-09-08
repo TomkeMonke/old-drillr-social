@@ -40,7 +40,25 @@ same account the store screenshots use. What good looks like:
     diet        calories actually logged, not 0 or a token number
     progress    a high completion percentage and a FULL heatmap
 
-### diet has a fixed composition
+### a slot is one composition, with different values
+
+Every capture in a slot shows the SAME screen, framed the same way. What varies
+between them is what is ON that screen - the numbers, the date, the session, how
+far round each ring has gone.
+
+That rules out mid-scroll captures of a screen whose other captures start at the
+top. They look fine on their own and they are genuinely different images, but
+the slot then rotates between two different screen SHAPES rather than one screen
+with different content, and the carousel stops looking like the same app twice.
+Two have been cut for exactly this: a diet capture with Today's Log expanded,
+and a home capture scrolled past the date header.
+
+    home        starts at the back arrow, date, session name, coach card,
+                then the Exercises list
+    diet        calorie card, three macro tiles, Add food, Today's Log
+                COLLAPSED, Nutrition Tips in view
+
+### what varies inside the diet slot
 
 Every diet capture is the SAME screen: the calorie card, the three macro tiles,
 Add food, Today's Log **collapsed**, and the Nutrition Tips card in view. What
