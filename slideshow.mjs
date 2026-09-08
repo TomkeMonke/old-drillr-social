@@ -203,7 +203,10 @@ function makeOne(queue) {
     id,
     status: 'rendered',
     createdAt: new Date().toISOString(),
-    outDir: path.relative(REPO, outDir),
+    // POSIX separators: this lands in state/queue.json, which is committed,
+    // and a Windows `out\<id>` read on Linux is one filename with a backslash
+    // in it rather than a path. Cost drillr-social a broken daily run.
+    outDir: path.relative(REPO, outDir).split(path.sep).join('/'),
     caption_full: caption,
     pictures: spent.map((f) => path.relative(REPO, f).split(path.sep).join('/')),
   };
