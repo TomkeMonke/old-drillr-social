@@ -53,8 +53,8 @@ with different content, and the carousel stops looking like the same app twice.
 Two have been cut for exactly this: a diet capture with Today's Log expanded,
 and a home capture scrolled past the date header.
 
-    home        starts at the back arrow, date, session name, coach card,
-                then the Exercises list
+    home        starts at the date, session name, coach card, then the
+                Exercises list
     diet        calorie card, three macro tiles, Add food, Today's Log
                 COLLAPSED, Nutrition Tips in view
 
@@ -113,6 +113,12 @@ python prep-screen.py raw.png out.jpg --top 185              # cut deeper
 It takes the status bar off the top and the scroll indicator off the sides, and
 leaves the bottom alone by default, because the template runs the screenshot off
 the foot of the slide anyway.
+
+**No back arrows.** A detail screen puts one top-left, and it is navigation
+furniture - it says "this person is tapping around an app" rather than showing
+the app. Cut above it with `--top`: on the A52s the arrow sits at rows 154-191
+of a raw capture, with flat header under it, so 318 works for a session screen
+and 275 for a Progress detail. The whole set is cropped this way.
 
 `--bottom N` is for when something at the foot of the screen has to go rather
 than be bled off - a Share button, or a section that belongs to a different part
