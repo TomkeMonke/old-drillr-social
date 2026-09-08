@@ -40,6 +40,29 @@ same account the store screenshots use. What good looks like:
     diet        calories actually logged, not 0 or a token number
     progress    a high completion percentage and a FULL heatmap
 
+### diet has a fixed composition
+
+Every diet capture is the SAME screen: the calorie card, the three macro tiles,
+Add food, Today's Log **collapsed**, and the Nutrition Tips card in view. What
+varies between them is the numbers - calories, macros, how far round each ring
+has gone.
+
+So no expanded Today's Log. It is a good-looking screen and it was in the set
+for a while, but it pushes Nutrition Tips off the bottom, and the slot is meant
+to read as one screen with different values rather than as two different
+screens.
+
+The quickest way to get a new value: log food through the app, capturing as you
+go up, then delete entries from the top of Today's Log to walk back down. The
+log is newest-first, so deleting the top row repeatedly steps the total down
+through every intermediate value.
+
+One thing that does NOT vary this way: the Nutrition Tips card itself. It is
+driven by the day type, so a session day gives the same Training Day card with
+the same water target every time. A capture taken on a REST day is the only way
+to get the other card - different colour, different lines, different target -
+so it is worth grabbing one next time a rest day comes round.
+
 Re-seeding, the quota rules, and the account details are all in
 `FootballApp/screenshots/README.md`. Read the Firestore section before you start
 - a capture session has taken the whole daily read quota down before, for real
